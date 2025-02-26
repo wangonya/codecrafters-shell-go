@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"slices"
 	"strings"
 )
@@ -21,6 +22,18 @@ func commandExistsInPath(command string) (string, error) {
 		return path, nil
 	}
 	return "", fmt.Errorf("%s: not found", command)
+}
+
+func runCmd(command string) (string, error) {
+	split := strings.Split(command, " ")
+
+	_, err := commandExistsInPath(split[0])
+	if err != nil {
+		return "", err
+	}
+
+	out, err := exec.Command(split[0], split[1:]...).Output()
+	return string(out), err
 }
 
 func main() {
@@ -47,7 +60,12 @@ func main() {
 				fmt.Printf("%s is %s\n", command[5:], fmt.Sprintf("%s/%s", path, command[5:]))
 			}
 		} else {
-			fmt.Printf("%s: command not found\n", command)
+			out, err := runCmd(command)
+			if err != nil {
+				fmt.Printf("%s: command not found\n", command)
+			} else {
+				fmt.Print(out)
+			}
 		}
 	}
 }
