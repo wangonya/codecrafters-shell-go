@@ -3,13 +3,20 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"slices"
+	"strconv"
 	"strings"
 )
 
-var builtins = []string{"echo", "exit", "type"}
+var builtins = []string{"echo", "exit", "type", "pwd"}
+
+type command struct {
+	executable string
+	args       []string
+}
 
 // commandExistsInPath checks if the command exists in any of the locations in $PATH
 //
@@ -24,15 +31,13 @@ func commandExistsInPath(command string) (string, error) {
 	return "", fmt.Errorf("%s: not found", command)
 }
 
-func runCmd(command string) (string, error) {
-	split := strings.Split(command, " ")
-
-	_, err := commandExistsInPath(split[0])
+func runCmd(cmd command) (string, error) {
+	_, err := commandExistsInPath(cmd.executable)
 	if err != nil {
 		return "", err
 	}
 
-	out, err := exec.Command(split[0], split[1:]...).Output()
+	out, err := exec.Command(cmd.executable, cmd.args...).Output()
 	return string(out), err
 }
 
@@ -41,28 +46,44 @@ func main() {
 		fmt.Fprint(os.Stdout, "$ ")
 
 		// Wait for user input
-		command, _ := bufio.NewReader(os.Stdin).ReadString('\n')
+		input, err := bufio.NewReader(os.Stdin).ReadString('\n')
+		if err != nil {
+			fmt.Println(err)
+			log.Fatal(err)
+		}
 
-		command = strings.TrimRight(command, "\n")
-		if command == "exit 0" {
-			os.Exit(0)
-		} else if strings.HasPrefix(command, "echo ") {
-			fmt.Println(command[5:])
-		} else if strings.HasPrefix(command, "type ") {
-			if slices.Contains(builtins, command[5:]) {
-				fmt.Println(command[5:], "is a shell builtin")
+		splitInput := strings.Split(strings.TrimRight(input, "\n"), " ")
+		cmd := command{splitInput[0], splitInput[1:]}
+
+		switch cmd.executable {
+		case "echo":
+			out, _ := runCmd(cmd)
+			fmt.Print(out)
+		case "exit":
+			exitCode, err := strconv.Atoi(cmd.args[0])
+			if err != nil {
+				log.Fatal(err)
+			}
+			os.Exit(exitCode)
+		case "type":
+			if slices.Contains(builtins, cmd.args[0]) {
+				fmt.Println(cmd.args[0], "is a shell builtin")
 				continue
 			}
-			path, err := commandExistsInPath(command[5:])
+			path, err := commandExistsInPath(cmd.args[0])
 			if err != nil {
 				fmt.Printf("%s\n", err.Error())
 			} else {
-				fmt.Printf("%s is %s\n", command[5:], fmt.Sprintf("%s/%s", path, command[5:]))
+				fmt.Printf("%s is %s\n", cmd.args[0], fmt.Sprintf("%s/%s", path, cmd.args[0]))
 			}
-		} else {
-			out, err := runCmd(command)
+		case "pwd":
+			pwd, _ := os.Getwd()
+			fmt.Println(pwd)
+		default:
+			out, err := runCmd(cmd)
 			if err != nil {
-				fmt.Printf("%s: command not found\n", command)
+				// fmt.Println(cmd)
+				fmt.Printf("%s: command not found\n", cmd.executable)
 			} else {
 				fmt.Print(out)
 			}
