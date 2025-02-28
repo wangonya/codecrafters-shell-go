@@ -79,10 +79,15 @@ func main() {
 		case "pwd":
 			pwd, _ := os.Getwd()
 			fmt.Println(pwd)
+		case "cd":
+			path := cmd.args[0]
+			err := os.Chdir(path)
+			if err != nil {
+				fmt.Printf("cd: %s: No such file or directory\n", path)
+			}
 		default:
 			out, err := runCmd(cmd)
 			if err != nil {
-				// fmt.Println(cmd)
 				fmt.Printf("%s: command not found\n", cmd.executable)
 			} else {
 				fmt.Print(out)
