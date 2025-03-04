@@ -37,13 +37,7 @@ func runCmd(cmd command) (string, error) {
 		return "", err
 	}
 
-	// out, err := exec.Command(cmd.executable, cmd.args...).Output()
-	x := []string{cmd.executable}
-	x = append(x, cmd.args...)
-	y := strings.Join(x, " ")
-	// fmt.Println("y ->", y)
-	out, err := exec.Command("sh", "-c", y).CombinedOutput()
-	// fmt.Println("x ->", string(out), err)
+	out, err := exec.Command("sh", "-c", strings.Join(append([]string{cmd.executable}, cmd.args...), " ")).CombinedOutput()
 	return string(out), err
 }
 
@@ -53,18 +47,9 @@ func filterEmptyArgs(args []string) []string {
 	x := []string{}
 	inSingleQuotes := false
 	for _, v := range args {
-		// fmt.Println("v1 ->", v)
-		// fmt.Println("strings.Contains(v, ')", strings.Contains(v, "'"))
 		if strings.Contains(v, "'") {
 			inSingleQuotes = !inSingleQuotes
-			// continue
 		}
-
-		// if inSingleQuotes {
-		// 	continue
-		// }
-
-		// fmt.Println("v, insingle ->", v, inSingleQuotes)
 
 		if v != "" || inSingleQuotes {
 			x = append(x, v)
@@ -85,16 +70,12 @@ func main() {
 		}
 
 		splitInput := strings.Split(strings.TrimRight(input, "\n"), " ")
-		// fmt.Println("split 1 ->", splitInput)
 		splitInput = filterEmptyArgs(splitInput)
-		// fmt.Println("split 1 ->", splitInput)
 		cmd := command{splitInput[0], splitInput[1:]}
 
 		switch cmd.executable {
 		case "echo":
 			out, _ := runCmd(cmd)
-			// fmt.Println(cmd)
-			// fmt.Println(out)
 			out = strings.Replace(out, "'", "", -1)
 			fmt.Print(out)
 		case "exit":
