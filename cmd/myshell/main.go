@@ -45,13 +45,15 @@ func runCmd(cmd command) (string, error) {
 // may be inteprated as args
 func filterEmptyArgs(args []string) []string {
 	x := []string{}
-	inSingleQuotes := false
+	inQuotes := false
 	for _, v := range args {
-		if strings.Contains(v, "'") {
-			inSingleQuotes = !inSingleQuotes
+		if strings.HasPrefix(v, "'") || strings.HasPrefix(v, "\"") {
+			inQuotes = true
+		} else if inQuotes && (strings.HasSuffix(v, "'") || strings.HasSuffix(v, "\"")) {
+			inQuotes = false
 		}
 
-		if v != "" || inSingleQuotes {
+		if v != "" || inQuotes {
 			x = append(x, v)
 		}
 	}
@@ -76,7 +78,7 @@ func main() {
 		switch cmd.executable {
 		case "echo":
 			out, _ := runCmd(cmd)
-			out = strings.Replace(out, "'", "", -1)
+			out = strings.Trim(out, "'")
 			fmt.Print(out)
 		case "exit":
 			exitCode, err := strconv.Atoi(cmd.args[0])
