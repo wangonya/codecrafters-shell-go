@@ -46,8 +46,6 @@ func runCmd(cmd command) (string, error) {
 func filterEmptyArgs(args []string) []string {
 	x := []string{}
 	inQuotes := false
-	// escape :=false
-	// fmt.Println(args)
 	for _, v := range args {
 		if strings.HasPrefix(v, "'") || strings.HasPrefix(v, "\"") {
 			inQuotes = true
@@ -80,8 +78,8 @@ func main() {
 		switch cmd.executable {
 		case "echo":
 			out, _ := runCmd(cmd)
-			// out = strings.Trim(out, "'")
-			out = strings.ReplaceAll(out, "\\", "")
+			// fmt.Println(cmd)
+			// out = strings.ReplaceAll(out, "\\", "")
 			fmt.Print(out)
 		case "exit":
 			exitCode, err := strconv.Atoi(cmd.args[0])
