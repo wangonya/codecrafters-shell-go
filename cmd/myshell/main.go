@@ -39,10 +39,10 @@ func commandExistsInPath(command string) (string, error) {
 func runCmd(cmd command) string {
 	_, err := commandExistsInPath(cmd.executable)
 	if err != nil {
-		return err.Error()
+		return fmt.Sprintf("%s: command not found\n", cmd.executable)
 	}
 
-	out, err := exec.Command("sh", "-c", strings.Join(append([]string{cmd.executable}, cmd.args...), " ")).CombinedOutput()
+	out, _ := exec.Command("sh", "-c", strings.Join(append([]string{cmd.executable}, cmd.args...), " ")).CombinedOutput()
 	return string(out)
 }
 
