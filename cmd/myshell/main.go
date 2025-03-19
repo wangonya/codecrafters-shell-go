@@ -22,6 +22,11 @@ type command struct {
 //
 // If a match is found, the path location is returned, otherwise err
 func commandExistsInPath(command string) (string, error) {
+	if strings.HasPrefix(command, "'") {
+		command = strings.Trim(command, "'")
+	} else if strings.HasPrefix(command, "\"") {
+		command = strings.Trim(command, "\"")
+	}
 	for _, path := range strings.Split(os.Getenv("PATH"), ":") {
 		if _, err := os.Stat(fmt.Sprintf("%s/%s", path, command)); err != nil {
 			continue
@@ -73,13 +78,26 @@ func main() {
 
 		splitInput := strings.Split(strings.TrimRight(input, "\n"), " ")
 		splitInput = filterEmptyArgs(splitInput)
-		cmd := command{splitInput[0], splitInput[1:]}
+		cmd := command{}
+		if strings.HasPrefix(splitInput[0], "'") || strings.HasPrefix(splitInput[0], "\"") {
+			prefix := string(splitInput[0][0])
+			x := []string{splitInput[0]}
+			for _, v := range splitInput[1:] {
+				x = append(x, v)
+				if strings.HasSuffix(v, prefix) {
+					break
+				}
+			}
+			cmd.executable = strings.Join(x, " ")
+			cmd.args = splitInput[len(x):]
+		} else {
+			cmd.executable = splitInput[0]
+			cmd.args = splitInput[1:]
+		}
 
 		switch cmd.executable {
 		case "echo":
 			out, _ := runCmd(cmd)
-			// fmt.Println(cmd)
-			// out = strings.ReplaceAll(out, "\\", "")
 			fmt.Print(out)
 		case "exit":
 			exitCode, err := strconv.Atoi(cmd.args[0])
