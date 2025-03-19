@@ -129,10 +129,7 @@ func main() {
 				fmt.Printf("cd: %s: No such file or directory\n", path)
 			}
 		case "cat":
-			out, err := runCmd(cmd)
-			if err != nil {
-				fmt.Println("err ->", err)
-			}
+			out, _ := runCmd(cmd)
 			fmt.Print(out)
 		default:
 			out, err := runCmd(cmd)
