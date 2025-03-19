@@ -36,14 +36,14 @@ func commandExistsInPath(command string) (string, error) {
 	return "", fmt.Errorf("%s: not found", command)
 }
 
-func runCmd(cmd command) (string, error) {
+func runCmd(cmd command) string {
 	_, err := commandExistsInPath(cmd.executable)
 	if err != nil {
-		return "", err
+		return err.Error()
 	}
 
 	out, err := exec.Command("sh", "-c", strings.Join(append([]string{cmd.executable}, cmd.args...), " ")).CombinedOutput()
-	return string(out), err
+	return string(out)
 }
 
 // filterEmptyArgs removes any leading and trailing spaces that
@@ -97,7 +97,7 @@ func main() {
 
 		switch cmd.executable {
 		case "echo":
-			out, _ := runCmd(cmd)
+			out := runCmd(cmd)
 			fmt.Print(out)
 		case "exit":
 			exitCode, err := strconv.Atoi(cmd.args[0])
@@ -129,15 +129,11 @@ func main() {
 				fmt.Printf("cd: %s: No such file or directory\n", path)
 			}
 		case "cat":
-			out, _ := runCmd(cmd)
+			out := runCmd(cmd)
 			fmt.Print(out)
 		default:
-			out, err := runCmd(cmd)
-			if err != nil {
-				fmt.Printf("%s: command not found\n", cmd.executable)
-			} else {
-				fmt.Print(out)
-			}
+			out := runCmd(cmd)
+			fmt.Print(out)
 		}
 	}
 }
